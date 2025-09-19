@@ -1,0 +1,2 @@
+{"pair_id": "mnli_0", "premise": "A scientist writes equations on a whiteboard.", "hypothesis": "Someone is doing mathematics.", "gold_label": "entailment", "genre": "slate", "pred_groundedness": -0.42}
+{"pair_id": "mnli_1", "premise": "Justice is a concept debated by scholars across centuries.", "hypothesis": "Justice has never been clearly defined.", "gold_label": "neutral", "genre": "government", "pred_groundedness": -0.38}

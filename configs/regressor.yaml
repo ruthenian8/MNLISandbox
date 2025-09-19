@@ -1,6 +1,22 @@
-base: "roberta-base"
-lr: 2e-5
-epochs: 3
-batch_size: 32
-seeds: [0,1,2,3,4,5,6,7,8,9]
-target: "G_sentence_mean"
+model:
+  name: roberta-base
+  pooling: cls
+  hidden_dropout_prob: 0.1
+  gradient_reversal: false
+training:
+  loss: mse
+  epochs: 3
+  lr: 2.0e-5
+  batch_size: 32
+  weight_decay: 0.01
+  validation_metric: spearman
+features:
+  text_column: premise
+  target_column: groundedness
+  controls:
+    - concreteness_mean
+    - premise_len
+    - wf_mean
+outputs:
+  checkpoint_dir: artifacts/regressor_ckpt
+  metrics_file: artifacts/regressor_metrics.json
