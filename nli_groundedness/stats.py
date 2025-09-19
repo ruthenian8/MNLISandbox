@@ -5,6 +5,8 @@ from __future__ import annotations
 from collections import defaultdict
 from typing import Dict, Iterable, List, Sequence
 
+import scipy.stats
+
 try:  # pragma: no cover - optional dependency
     import pandas as pd  # type: ignore
 except Exception:  # pragma: no cover
@@ -19,45 +21,10 @@ def _ensure_iterable(df):
     return list(df)
 
 
-def _rankdata(values: Sequence[float]) -> List[float]:
-    items = sorted((value, idx) for idx, value in enumerate(values))
-    ranks = [0.0] * len(values)
-    i = 0
-    while i < len(items):
-        j = i
-        total = 0.0
-        while j < len(items) and items[j][0] == items[i][0]:
-            total += j + 1
-            j += 1
-        avg_rank = total / (j - i)
-        for k in range(i, j):
-            ranks[items[k][1]] = avg_rank
-        i = j
-    return ranks
-
-
-def _pearson(x: Sequence[float], y: Sequence[float]) -> float:
-    if len(x) != len(y) or not x:
-        return 0.0
-    mean_x = sum(x) / len(x)
-    mean_y = sum(y) / len(y)
-    num = sum((a - mean_x) * (b - mean_y) for a, b in zip(x, y))
-    den_x = sum((a - mean_x) ** 2 for a in x)
-    den_y = sum((b - mean_y) ** 2 for b in y)
-    denom = (den_x * den_y) ** 0.5
-    if denom == 0:
-        return 0.0
-    return num / denom
-
-
-def _spearman(x: Sequence[float], y: Sequence[float]) -> float:
-    return _pearson(_rankdata(x), _rankdata(y))
-
-
 def corr_table(df, gcol: str = "G_sentence_mean"):
     rows = _ensure_iterable(df)
     targets: Dict[str, List[float]] = defaultdict(list)
-    grounded: List[float] = []
+    grounded_per_col: Dict[str, List[float]] = defaultdict(list)
     for row in rows:
         g = row.get(gcol)
         if g is None:
@@ -66,14 +33,16 @@ def corr_table(df, gcol: str = "G_sentence_mean"):
             value = row.get(col)
             if value is None:
                 continue
-            grounded.append(float(g))
+            grounded_per_col[col].append(float(g))
             targets[col].append(float(value))
     results = {}
     for col, values in targets.items():
-        if not values or len(values) != len(grounded):
+        grounded = grounded_per_col[col]
+        if not values or not grounded or len(values) != len(grounded):
             continue
-        rho = _spearman(grounded, values)
-        results[col] = {"spearman_rho": rho, "p": None, "n": len(values)}
+        # Use scipy.stats.spearmanr instead of custom _spearman
+        correlation, p_value = scipy.stats.spearmanr(grounded, values)
+        results[col] = {"spearman_rho": correlation, "p": p_value, "n": len(values)}
     if pd is not None:
         return pd.DataFrame.from_dict(results, orient="index")
     return results
