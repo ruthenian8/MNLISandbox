@@ -1,0 +1,2 @@
+# Placeholder file. Run `python scripts/run_experiment.py` (synthetic demo) or the full pipeline to populate this list with
+# MNLI pair IDs from the lowest groundedness slice.

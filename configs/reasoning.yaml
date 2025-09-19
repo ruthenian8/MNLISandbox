@@ -1,0 +1,13 @@
+models:
+  - name: "stub-model"
+    max_new_tokens: 16
+    temperature: 0.0
+prompt_template: |
+  You are an NLI classifier. Decide among entailment, contradiction, neutral.
+  Premise: {premise}
+  Hypothesis: {hypothesis}
+  Answer with one word: entailment, contradiction, or neutral.
+label_regex:
+  entailment: "entail"
+  contradiction: "contradict"
+  neutral: "neutral"

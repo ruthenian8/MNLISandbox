@@ -1,0 +1,6 @@
+snli_dir: data/snli
+mnli_dir: data/mnli
+chaos_dir: data/chaosnli
+flickr_index_csv: data/flickr30k_index.csv
+artifacts_dir: artifacts
+figures_dir: figures
