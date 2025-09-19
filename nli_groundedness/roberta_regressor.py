@@ -5,14 +5,38 @@ from __future__ import annotations
 from statistics import mean
 from typing import Iterable, List, Sequence
 
+try:  # pragma: no cover - optional dependency
+    import scipy.stats  # type: ignore
+except Exception:  # pragma: no cover
+    scipy = None  # type: ignore
+else:
+    scipy = scipy.stats
+
+try:  # pragma: no cover - optional dependency
+    import numpy as np  # type: ignore
+except Exception:  # pragma: no cover
+    np = None  # type: ignore
+
 
 def _safe_mean(values: Sequence[float]) -> float:
     return mean(values) if values else 0.0
 
 
 def _linear_fit(xs: List[float], ys: List[float]) -> tuple[float, float]:
+    """Perform linear regression with scipy if available, otherwise use custom implementation."""
     if not xs or not ys:
         return 0.0, _safe_mean(ys)
+    
+    if scipy is not None and np is not None:
+        try:
+            # Use scipy.stats.linregress for better numerical stability
+            result = scipy.linregress(xs, ys)
+            return result.slope, result.intercept
+        except Exception:
+            # Fall back to custom implementation if scipy fails
+            pass
+    
+    # Fallback implementation for when scipy/numpy is not available or fails
     avg_x = _safe_mean(xs)
     avg_y = _safe_mean(ys)
     numerator = sum((x - avg_x) * (y - avg_y) for x, y in zip(xs, ys))
@@ -44,6 +68,24 @@ def train_eval(
     makes swapping in a proper implementation trivial.
     """
 
+    # Use numpy for vectorized operations if available
+    if np is not None:
+        try:
+            # Vectorized computation of text lengths
+            train_lengths = np.array([float(len((text or "").split())) for text in train_texts])
+            targets = np.array([float(y) for y in train_targets])
+            dev_lengths = np.array([float(len((text or "").split())) for text in dev_texts])
+            
+            slope, intercept = _linear_fit(train_lengths.tolist(), targets.tolist())
+            
+            # Vectorized prediction
+            predictions = intercept + slope * dev_lengths
+            return predictions.tolist()
+        except Exception:
+            # Fall back to list-based implementation
+            pass
+    
+    # Fallback implementation using lists
     train_lengths = [float(len((text or "").split())) for text in train_texts]
     targets = [float(y) for y in train_targets]
     slope, intercept = _linear_fit(train_lengths, targets)
